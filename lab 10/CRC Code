@@ -1,0 +1,81 @@
+def xor(a, b):
+    """Performs XOR between two binary strings of equal length."""
+    result = ""
+    for i in range(1, len(b)):
+        result += '0' if a[i] == b[i] else '1'
+    return result
+
+
+def mod2div(dividend, divisor, show_steps=False):
+    """Performs Modulo-2 division and returns the remainder."""
+    pick = len(divisor)
+    tmp = dividend[0:pick]
+
+    if show_steps:
+        print(f"\nInitial portion: {tmp}")
+
+    while pick < len(dividend):
+        if tmp[0] == '1':
+            if show_steps:
+                print(f"XOR {tmp} with {divisor}")
+            tmp = xor(tmp, divisor) + dividend[pick]
+        else:
+            if show_steps:
+                print(f"XOR {tmp} with {'0'*len(divisor)}")
+            tmp = xor(tmp, '0'*len(divisor)) + dividend[pick]
+
+        if show_steps:
+            print(f"Result: {tmp}")
+        pick += 1
+
+    # Final step (no more bits left to bring down)
+    if tmp[0] == '1':
+        tmp = xor(tmp, divisor)
+        if show_steps:
+            print(f"Final XOR with divisor: {tmp}")
+    else:
+        tmp = xor(tmp, '0'*len(divisor))
+        if show_steps:
+            print(f"Final XOR with zeros: {tmp}")
+
+    if show_steps:
+        print(f"Final remainder: {tmp}")
+    return tmp
+
+
+def compute_crc(data, divisor, show_steps=False):
+    """Computes the CRC remainder for the given data."""
+    len_divisor = len(divisor)
+    appended_data = data + '0' * (len_divisor - 1)
+
+    if show_steps:
+        print(f"\nData after appending zeros: {appended_data}")
+
+    remainder = mod2div(appended_data, divisor, show_steps)
+    crc = remainder[-(len_divisor - 1):]  # last n-1 bits are CRC
+    return crc
+
+
+def main():
+    data = input("Enter data bits: ").strip()
+    divisor = input("Enter divisor (generator) bits: ").strip()
+
+    print("\n--- SENDER SIDE ---")
+    crc = compute_crc(data, divisor, show_steps=True)
+    transmitted_frame = data + crc
+    print(f"\nCRC value: {crc}")
+    print(f"Transmitted Frame: {transmitted_frame}")
+
+    print("\n--- RECEIVER SIDE ---")
+    received_frame = input("Enter received frame: ").strip()
+
+    remainder = mod2div(received_frame, divisor, show_steps=True)
+
+    if '1' not in remainder:
+        print("\n✅ No Error Detected (Remainder = 0)")
+    else:
+        print("\n❌ Error Detected! (Remainder ≠ 0)")
+
+
+if __name__ == "__main__":
+    main()
